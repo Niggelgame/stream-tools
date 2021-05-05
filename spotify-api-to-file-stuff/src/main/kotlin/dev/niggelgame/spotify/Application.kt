@@ -1,6 +1,7 @@
 package dev.niggelgame.spotify
 
 import com.adamratzman.spotify.*
+import com.adamratzman.spotify.models.AuthenticationError
 import com.adamratzman.spotify.models.Token
 import io.ktor.application.*
 import io.ktor.http.*
@@ -32,31 +33,43 @@ suspend fun main() {
     val path = Path(configPath)
 
     val apiToken = if (path.isRegularFile()) {
-        val token = Path("config.asdj").readText()
+        val token = path.readText()
         Json.decodeFromString(token)
     } else {
-        val token = getToken()
-        val tokenString = Json.encodeToString(token)
-        path.writeText(tokenString)
-        token
+        getToken()
     }
 
-    val api = spotifyClientPkceApi(
-        null,
-        null,
-        token = apiToken
-    ).build()
+    var api = getApiClient(apiToken)
+
     val filePath = Path(Config.LOCAL_FILE)
     val ticker = ticker(Duration.ofSeconds(10).toMillis(), 0)
     for (unit in ticker) {
-        val song = api.player.getCurrentlyPlaying()?.track ?: continue
+        val song = try {
+            api.player.getCurrentlyPlaying()?.track ?: continue
+        } catch (e: SpotifyException.AuthenticationException) {
+            val token = getToken()
+            api = getApiClient(token)
+            api.player.getCurrentlyPlaying()?.track ?: continue
+        }
         filePath.writeText("${song.artists.joinToString(", ") { it.name }} - ${song.name}")
         println(song.name)
         println(song.artists.joinToString(", ") { it.name })
     }
 }
 
+suspend fun getApiClient(t: Token) : SpotifyClientApi {
+    return try {
+        spotifyClientPkceApi(
+            Config.CLIENT_ID,
+            null,
+            token = t
+        ).build()
+    } catch (e: SpotifyException.AuthenticationException) {
+        getApiClient(getToken())
+    }
+}
 
+@OptIn(ExperimentalPathApi::class)
 suspend fun getToken(): Token {
     val code = getAuthCode()
 
@@ -67,6 +80,8 @@ suspend fun getToken(): Token {
         codeVerifier, // the same code verifier you used to generate the code challenge
     ).build()
 
+    val tokenString = Json.encodeToString(api.token)
+    Path(configPath).writeText(tokenString)
 
     return api.token
 }
