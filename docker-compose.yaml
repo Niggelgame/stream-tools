@@ -9,3 +9,8 @@ services:
             - T:\\stream:/usr/app/data
         ports:
             - "8072:8072"
+
+    bot:
+        build: twitch-bot
+        env_file:
+            - ./env/bot.env
