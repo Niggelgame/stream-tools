@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+    spotify:
+        build: spotify-api-to-file-stuff
+        env_file:
+            - ./env/spotify.env
+        volumes:
+            - T:\\stream:/usr/app/data
+        ports:
+            - "8072:8072"

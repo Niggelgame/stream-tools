@@ -1,36 +1,27 @@
 package dev.niggelgame.spotify
 
 import com.adamratzman.spotify.*
-import com.adamratzman.spotify.models.AuthenticationError
 import com.adamratzman.spotify.models.Token
 import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.ticker
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Duration
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.io.path.*
-import kotlinx.coroutines.ObsoleteCoroutinesApi
-import java.awt.Desktop
-import java.net.URI
-import java.nio.file.OpenOption
-import java.nio.file.StandardOpenOption
 import kotlin.time.ExperimentalTime
-
-const val configPath = "config.asdj"
 
 const val codeVerifier = "pkFg9w7gAJVnJGfcXKqkOBna8sUJTWSjODlXagSG0hXnZkFAcIpnqE9fIeekzZdN"
 
 @OptIn(ExperimentalPathApi::class, ExperimentalTime::class, ObsoleteCoroutinesApi::class)
 suspend fun main() {
-    val path = Path(configPath)
+    val path = Path(Config.CONFIG_PATH)
 
     val apiToken = if (path.isRegularFile()) {
         val token = path.readText()
@@ -51,7 +42,7 @@ suspend fun main() {
             api = getApiClient(token)
             api.player.getCurrentlyPlaying()?.track ?: continue
         }
-        filePath.writeText("${song.artists.joinToString(", ") { it.name }} - ${song.name}")
+        filePath.writeText(" ${song.artists.joinToString(", ") { it.name }} - ${song.name} |")
         println(song.name)
         println(song.artists.joinToString(", ") { it.name })
     }
@@ -81,7 +72,7 @@ suspend fun getToken(): Token {
     ).build()
 
     val tokenString = Json.encodeToString(api.token)
-    Path(configPath).writeText(tokenString)
+    Path(Config.CONFIG_PATH).writeText(tokenString)
 
     return api.token
 }
@@ -115,5 +106,6 @@ suspend fun getAuthCode(): String = suspendCoroutine { cont ->
         codeChallenge = codeChallenge
     )
 
-    Desktop.getDesktop().browse(URI.create(url))
+    println("Open this URL: $url")
+    // Desktop.getDesktop().browse(URI.create(url))
 }

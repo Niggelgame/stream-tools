@@ -7,4 +7,5 @@ object Config {
     val CLIENT_ID by environment
     val LOCAL_FILE by environment
     val REDIRECT_PORT by getEnv { it.toInt() }
+    val CONFIG_PATH by environment
 }
