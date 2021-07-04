@@ -1,2 +1,4 @@
 *.asdj
 .env
+build
+.gradle
