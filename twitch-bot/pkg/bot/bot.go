@@ -87,6 +87,7 @@ func NewBot(client *twitch.Client, channel string, prefix string) *Bot {
 	bot.RegisterCommand(commands.NewHelpCommand())
 	bot.RegisterCommand(commands.NewPingCommand())
 	bot.RegisterCommand(commands.NewTwitterCommand())
+	bot.RegisterCommand(commands.NewHearkyDcCommand())
 
 	return bot
 }
